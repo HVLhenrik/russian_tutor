@@ -117,7 +117,7 @@ class WordPracticeDatabase:
         - Recent mistakes: very high priority
         - Low accuracy: high priority
         - Low mastery level: high priority
-        - Not practiced recently: medium priority
+        - Spaced repetition timing: practice at optimal intervals
         - High mastery: low priority (but still review occasionally)
         """
         if word_stats['total_attempts'] == 0:
@@ -144,26 +144,41 @@ class WordPracticeDatabase:
         if word_stats['streak'] == 0 and word_stats['total_attempts'] > 0:
             priority += 30  # Just made a mistake
         
-        # Time since last practice
+        # Spaced repetition: time since last practice based on mastery level
         if word_stats['last_practiced']:
             last_practice = datetime.fromisoformat(word_stats['last_practiced'])
-            days_ago = (datetime.now() - last_practice).days
+            hours_ago = (datetime.now() - last_practice).total_seconds() / 3600
             
-            if days_ago > 7:
-                priority += 20  # Not practiced in a week
-            elif days_ago > 3:
-                priority += 10  # Not practiced in 3 days
-            elif days_ago < 1:
-                priority -= 20  # Practiced very recently
+            # Optimal review intervals based on mastery level (in hours)
+            # Lower mastery = shorter intervals
+            optimal_intervals = {
+                0: 4,      # Review after 4 hours
+                1: 12,     # Review after 12 hours
+                2: 24,     # Review after 1 day
+                3: 72,     # Review after 3 days
+                4: 168,    # Review after 1 week
+                5: 336     # Review after 2 weeks
+            }
+            
+            optimal = optimal_intervals.get(mastery, 24)
+            
+            # Calculate how overdue this word is
+            if hours_ago >= optimal * 1.2:  # 20% past optimal time
+                priority += 25
+            elif hours_ago >= optimal:
+                priority += 15
+            elif hours_ago >= optimal * 0.8:  # Within 80% of optimal
+                priority += 5
+            elif hours_ago < optimal * 0.3:  # Too recent
+                priority -= 30
         
         return max(0, priority)
     
     def get_words_for_practice(self, available_words: List[Dict], num_words: int = 30) -> List[Dict]:
         """
         Select words for practice session using intelligent priority-based algorithm:
-        - ~33% previous mistakes (low accuracy/mastery)
-        - ~33% new words
-        - ~33% review words (mixed mastery levels)
+        - ~50% new words
+        - ~50% review (mistakes, low mastery, spaced repetition)
         """
         # Calculate priority for each word
         word_priorities = []
@@ -182,36 +197,32 @@ class WordPracticeDatabase:
         
         # Categorize words
         never_seen = [wp for wp in word_priorities if wp['stats']['total_attempts'] == 0]
-        mistakes = [wp for wp in word_priorities if wp['stats']['total_attempts'] > 0 and 
-                   (wp['stats']['correct'] / wp['stats']['total_attempts'] < 0.7 or 
-                    wp['stats']['mastery_level'] < 2)]
-        review = [wp for wp in word_priorities if wp['stats']['total_attempts'] > 0 and 
-                 wp['stats']['correct'] / wp['stats']['total_attempts'] >= 0.7]
         
-        # Calculate targets (flexible based on availability)
-        target_mistakes = int(num_words * 0.33)
-        target_new = int(num_words * 0.33)
-        target_review = num_words - target_mistakes - target_new
+        # Review words: mistakes, low mastery, or due for spaced repetition
+        review = [wp for wp in word_priorities if wp['stats']['total_attempts'] > 0]
+        
+        # Calculate targets: 50% new, 50% review
+        target_new = int(num_words * 0.5)
+        target_review = num_words - target_new
         
         practice_list = []
         
-        # Add mistakes (prioritize recent errors and low accuracy)
-        mistakes_to_add = min(len(mistakes), target_mistakes)
-        practice_list.extend([wp['word'] for wp in mistakes[:mistakes_to_add]])
-        
-        # Add new words
+        # Add new words (up to 50%)
         new_to_add = min(len(never_seen), target_new)
         practice_list.extend([wp['word'] for wp in never_seen[:new_to_add]])
         
-        # Fill remaining with review words (prefer variety of mastery levels)
+        # Add review words (mistakes, low mastery, spaced repetition)
+        review_to_add = min(len(review), target_review)
+        practice_list.extend([wp['word'] for wp in review[:review_to_add]])
+        
+        # Fill any remaining slots with highest priority words
         remaining = num_words - len(practice_list)
         if remaining > 0:
-            # Mix of all remaining words by priority
-            remaining_pool = mistakes[mistakes_to_add:] + never_seen[new_to_add:] + review
+            remaining_pool = never_seen[new_to_add:] + review[review_to_add:]
             remaining_pool.sort(key=lambda x: x['priority'], reverse=True)
             practice_list.extend([wp['word'] for wp in remaining_pool[:remaining]])
         
-        # Final shuffle to mix categories
+        # Final shuffle to mix new and review words
         random.shuffle(practice_list)
         
         return practice_list[:num_words]
