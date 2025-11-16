@@ -1,6 +1,7 @@
 from typing import List, Dict
 from data.word_practice_database import WordPracticeDatabase
 from data.vocabulary_extractor import VocabularyExtractor
+from data.verb_database import VerbDatabase
 from utils.display import display_feedback
 from utils.input_helpers import get_quit_input
 
@@ -8,9 +9,15 @@ class WordPractice:
     """Interactive word practice with intelligent rotation and tracking"""
     
     def __init__(self):
-        self.practice_db = WordPracticeDatabase()
-        self.vocab_extractor = VocabularyExtractor()
-    
+        self.extractor = VocabularyExtractor()
+        self.db = WordPracticeDatabase()
+        self.verb_db = VerbDatabase()  # Add verb database reference
+        
+        # Check if CSV file exists
+        if not self.extractor.check_csv_file():
+            print("\n⚠️  Warning: Could not load vocabulary data")
+            print("   Make sure SMARTool_data_A1.csv is in the correct location")
+
     def normalize_answer(self, answer: str) -> str:
         """Normalize user answer for comparison"""
         return answer.lower().strip()
@@ -33,14 +40,60 @@ class WordPractice:
         
         return False
     
+    def _enrich_word_data(self, word: Dict) -> Dict:
+        """Enrich word data with verb conjugation info if applicable"""
+        # If it's a verb, try to get more reliable aspect info from VerbDatabase
+        if word.get('pos', '').startswith('V'):
+            verb_info = self.verb_db.get_verb(word['russian'])
+            if verb_info:
+                # Update aspect from VerbDatabase (more reliable than CSV parsing)
+                word['aspect'] = verb_info.get('aspect', word.get('aspect', 'unknown'))
+                word['irregular'] = verb_info.get('irregular', False)
+        
+        return word
+
+    def _display_word_info(self, word: Dict, stats: Dict):
+        """Display word information with statistics"""
+        print(f"\n{'=' * 60}")
+        print(f"Russian: {word['russian']}")
+        print(f"English: {word['english']}")
+        print(f"Part of Speech: {word.get('pos', 'N/A')}")
+        
+        # Display aspect for verbs
+        if word.get('pos', '').startswith('V'):
+            aspect = word.get('aspect', 'unknown')
+            if aspect == 'perfective':
+                print(f"Aspect: ⚡ Perfective (completed action)")
+            elif aspect == 'imperfective':
+                print(f"Aspect: 🔄 Imperfective (ongoing/repeated action)")
+            else:
+                print(f"Aspect: ❓ Unknown")
+            
+            # Show if irregular
+            if word.get('irregular'):
+                print(f"⚠️  IRREGULAR VERB")
+        
+        print(f"Level: {word.get('level', 'N/A')}")
+        
+        if stats['total_attempts'] > 0:
+            accuracy = (stats['correct'] / stats['total_attempts']) * 100
+            print(f"\n📊 Your Statistics:")
+            print(f"   Accuracy: {accuracy:.1f}% ({stats['correct']}/{stats['total_attempts']})")
+            print(f"   Mastery: {'⭐' * stats['mastery_level']} ({stats['mastery_level']}/5)")
+            print(f"   Current Streak: {stats['streak']}")
+        else:
+            print(f"\n🆕 New word - never practiced before")
+        
+        print(f"{'=' * 60}\n")
+
     def run_practice_session(self, words_per_session: int = 30):
         """Run a complete practice session"""
-        print("\n" + "=" * 70)
+        print("\n" + "=" * 60)
         print("  📚 WORD PRACTICE SESSION")
-        print("=" * 70)
+        print("=" * 60)
         
         # Get all available words
-        all_words = self.vocab_extractor.extract_unique_words()
+        all_words = self.extractor.extract_unique_words()
         
         if not all_words:
             print("\n❌ No words found in database. Please check CSV file.")
@@ -58,32 +111,36 @@ class WordPractice:
         choice = input("\nEnter choice (1-4, default=1): ").strip()
         
         if choice == '2':
-            words_pool = self.vocab_extractor.get_words_by_pos('N')
+            words_pool = self.extractor.get_words_by_pos('N')
             print(f"📝 Practicing nouns only ({len(words_pool)} words available)")
         elif choice == '3':
-            words_pool = self.vocab_extractor.get_words_by_pos('V')
+            words_pool = self.extractor.get_words_by_pos('V')
             print(f"📝 Practicing verbs only ({len(words_pool)} words available)")
         elif choice == '4':
-            words_pool = self.vocab_extractor.get_words_by_pos('A')
+            words_pool = self.extractor.get_words_by_pos('A')
             print(f"📝 Practicing adjectives only ({len(words_pool)} words available)")
         else:
             words_pool = all_words
             print(f"📝 Practicing all word types ({len(words_pool)} words available)")
         
+        # ALWAYS enrich verb data regardless of filter choice
+        words_pool = [self._enrich_word_data(w) if w.get('pos', '').startswith('V') else w 
+                     for w in words_pool]
+        
         # Select words intelligently based on practice history
-        practice_words = self.practice_db.get_words_for_practice(
+        practice_words = self.db.get_words_for_practice(
             words_pool, 
             num_words=min(words_per_session, len(words_pool))
         )
         
         print(f"\n🎯 Session: {len(practice_words)} words")
-        print("=" * 70)
+        print("=" * 60)
         print("\n💡 Tip: Type 'quit' or 'q' at any time to exit the session")
         
         input("\nPress Enter to start...")
         
         # Start session
-        session_id = self.practice_db.start_session()
+        session_id = self.db.start_session()
         correct_count = 0
         incorrect_words = []
         session_aborted = False
@@ -95,20 +152,32 @@ class WordPractice:
             pos = word['pos']
             
             # Add to session
-            self.practice_db.add_word_to_session(session_id, russian)
+            self.db.add_word_to_session(session_id, russian)
             
             # Get stats for motivation
-            stats = self.practice_db.get_word_stats(russian)
+            stats = self.db.get_word_stats(russian)
             
-            print(f"\n{'─' * 70}")
+            print(f"\n{'─' * 60}")
             print(f"Word {i}/{len(practice_words)}")
             if stats['total_attempts'] > 0:
                 accuracy = (stats['correct'] / stats['total_attempts'] * 100)
                 print(f"Your history: {stats['correct']}/{stats['total_attempts']} correct ({accuracy:.0f}%) | Streak: {stats['streak']}")
-            print(f"{'─' * 70}")
+            print(f"{'─' * 60}")
             
             print(f"\n📖 Translate to Russian: {english}")
             print(f"   Part of speech: {pos}")
+            
+            # Show aspect for verbs (always, not just when filtering for verbs)
+            if pos.startswith('V'):
+                aspect = word.get('aspect', 'unknown')
+                if aspect == 'perfective':
+                    print(f"   Aspect: ⚡ Perfective (completed action)")
+                elif aspect == 'imperfective':
+                    print(f"   Aspect: 🔄 Imperfective (ongoing/repeated action)")
+                
+                # Show if irregular
+                if word.get('irregular'):
+                    print(f"   ⚠️  IRREGULAR VERB")
             
             user_answer = input("\n   Your answer: ").strip()
             
@@ -121,7 +190,7 @@ class WordPractice:
             is_correct = self.check_answer(user_answer, russian)
             
             # Record attempt
-            self.practice_db.record_attempt(russian, english, user_answer, is_correct)
+            self.db.record_attempt(russian, english, user_answer, is_correct)
             
             if is_correct:
                 display_feedback(True, russian)
@@ -165,7 +234,7 @@ class WordPractice:
         
         # End session
         incorrect_count = len(incorrect_words)
-        self.practice_db.end_session(session_id, correct_count, incorrect_count)
+        self.db.end_session(session_id, correct_count, incorrect_count)
         
         # Display session results
         if session_aborted:
@@ -182,12 +251,12 @@ class WordPractice:
                                   incorrect_words: List[Dict],
                                   aborted: bool = False):
         """Display session results with detailed feedback"""
-        print("\n" + "=" * 70)
+        print("\n" + "=" * 60)
         if aborted:
             print("  📊 SESSION ABORTED (Partial Results)")
         else:
             print("  📊 SESSION COMPLETE")
-        print("=" * 70)
+        print("=" * 60)
         
         percentage = (correct / total * 100) if total > 0 else 0
         
@@ -209,33 +278,33 @@ class WordPractice:
         
         # Show words to review
         if incorrect_words:
-            print("\n" + "─" * 70)
+            print("\n" + "─" * 60)
             print("Words to review:")
-            print("─" * 70)
+            print("─" * 60)
             for item in incorrect_words:
                 print(f"\n  {item['english']}")
                 print(f"  ❌ Your answer: {item['user_answer']}")
                 print(f"  ✅ Correct: {item['russian']}")
         
         # Show overall statistics
-        stats = self.practice_db.get_statistics()
-        print("\n" + "=" * 70)
+        stats = self.db.get_statistics()
+        print("\n" + "=" * 60)
         print("  📈 OVERALL STATISTICS")
-        print("=" * 70)
+        print("=" * 60)
         print(f"\nTotal words practiced: {stats['total_words_practiced']}")
         print(f"Total attempts: {stats['total_attempts']}")
         print(f"Overall accuracy: {stats['accuracy']:.1f}%")
         print(f"Mastered words: {stats['mastered_words']}")
         print(f"Total sessions: {stats['total_sessions']}")
-        print("=" * 70)
+        print("=" * 60)
     
     def view_statistics(self):
         """View detailed practice statistics"""
-        stats = self.practice_db.get_statistics()
+        stats = self.db.get_statistics()
         
-        print("\n" + "=" * 70)
+        print("\n" + "=" * 60)
         print("  📊 YOUR PRACTICE STATISTICS")
-        print("=" * 70)
+        print("=" * 60)
         
         print(f"\n📚 Vocabulary Progress:")
         print(f"  Total words practiced: {stats['total_words_practiced']}")
@@ -250,7 +319,7 @@ class WordPractice:
         print(f"  Incorrect answers: {stats['total_incorrect']}")
         
         # Show recent sessions
-        recent_sessions = self.practice_db.get_session_history(limit=5)
+        recent_sessions = self.db.get_session_history(limit=5)
         if recent_sessions:
             print(f"\n📅 Recent Sessions:")
             for i, session in enumerate(recent_sessions, 1):
@@ -263,4 +332,4 @@ class WordPractice:
                         print(f"    Score: {session['correct_count']}/{total_questions}")
                         print(f"    Accuracy: {accuracy:.1f}%")
         
-        print("=" * 70)
+        print("=" * 60)

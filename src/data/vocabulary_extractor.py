@@ -25,10 +25,22 @@ class VocabularyExtractor:
             print(f"❌ Error reading CSV: {e}")
             return False
     
+    def _extract_aspect_from_analysis(self, analysis: str) -> str:
+        """Extract aspect (Perf/Imperf) from the Analysis column"""
+        if not analysis:
+            return 'unknown'
+        
+        analysis_lower = analysis.lower()
+        if 'perf' in analysis_lower and 'imperf' not in analysis_lower:
+            return 'perfective'
+        elif 'imperf' in analysis_lower:
+            return 'imperfective'
+        return 'unknown'
+    
     def extract_unique_words(self) -> List[Dict]:
         """
         Extract unique Russian words with their English translations
-        Returns list of dicts: {russian: str, english: str, pos: str, level: str}
+        Returns list of dicts: {russian: str, english: str, pos: str, level: str, aspect: str (for verbs)}
         """
         unique_words = {}
         
@@ -55,6 +67,7 @@ class VocabularyExtractor:
                         english = row.get('User language gloss', '').strip()
                     pos = row.get('POS', '').strip()
                     level = row.get('Level', '').strip()
+                    analysis = row.get('Analysis', '').strip()
                     
                     # Skip empty entries
                     if not lemma or not english:
@@ -66,12 +79,18 @@ class VocabularyExtractor:
                     
                     # Use lemma as key to ensure uniqueness
                     if lemma not in unique_words:
-                        unique_words[lemma] = {
+                        word_data = {
                             'russian': lemma,
                             'english': english,
                             'pos': pos,
                             'level': level
                         }
+                        
+                        # Add aspect information for verbs
+                        if pos and pos.startswith('V'):
+                            word_data['aspect'] = self._extract_aspect_from_analysis(analysis)
+                        
+                        unique_words[lemma] = word_data
                         rows_added += 1
                 
                 print(f"\n📊 CSV Processing Summary:")
@@ -93,3 +112,12 @@ class VocabularyExtractor:
         """Get words filtered by CEFR level"""
         all_words = self.extract_unique_words()
         return [w for w in all_words if w['level'] == level]
+    
+    def get_verbs(self) -> List[Dict]:
+        """Get all verbs with aspect information"""
+        return self.get_words_by_pos('V')
+    
+    def get_verbs_by_aspect(self, aspect: str) -> List[Dict]:
+        """Get verbs filtered by aspect (perfective/imperfective)"""
+        verbs = self.get_verbs()
+        return [v for v in verbs if v.get('aspect', '').lower() == aspect.lower()]

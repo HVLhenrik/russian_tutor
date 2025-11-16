@@ -3,6 +3,7 @@ from data.noun_database import NounDatabase
 from data.adjective_database import AdjectiveDatabase
 from data.pronoun_database import PronounDatabase
 from data.word_pair_database import WordPairDatabase
+from data.verb_database import VerbDatabase
 from quiz.quiz_engine import QuizEngine
 from quiz.exam_prep import ExamPrep
 from quiz.word_practice import WordPractice
@@ -14,6 +15,13 @@ from utils.declension_rules import (
     display_pronoun_declension_rules,
     display_case_usage_guide,
     display_declension_menu
+)
+from utils.verb_conjugation_rules import (
+    display_verb_conjugation_menu,
+    display_conjugation_patterns,
+    display_irregular_verbs,
+    display_verb_aspects,
+    display_past_tense
 )
 
 def view_declension_rules():
@@ -593,6 +601,174 @@ def word_practice_mode():
         else:
             print("\n❌ Invalid choice. Please select 1-4.")
 
+def view_verb_conjugation_rules():
+    """View verb conjugation rules reference"""
+    while True:
+        choice = display_verb_conjugation_menu()
+        
+        if choice == '1':
+            display_conjugation_patterns()
+        elif choice == '2':
+            display_irregular_verbs()
+        elif choice == '3':
+            display_verb_aspects()
+        elif choice == '4':
+            display_past_tense()
+        elif choice == '5':
+            break
+        else:
+            print("\n❌ Invalid choice. Please select 1-5.")
+        
+        input("\nPress Enter to continue...")
+
+def learn_verbs():
+    """Interactive verb conjugation learning with practice quiz"""
+    verb_db = VerbDatabase()
+    verbs = verb_db.get_all_verbs()
+    
+    print("\n=== LEARN RUSSIAN VERBS ===\n")
+    print("💡 Tip: Review conjugation patterns before practicing!")
+    print("💡 Type 'quit' or 'q' at any time to exit")
+    
+    if get_yes_no_input("\nWould you like to view conjugation rules first? (y/n): "):
+        display_conjugation_patterns()
+        input("\nPress Enter to continue...")
+    
+    # Choose practice mode
+    print("\nChoose practice mode:")
+    print("1. Present Tense (Conjugation I)")
+    print("2. Present Tense (Conjugation II)")
+    print("3. Irregular Verbs Only")
+    print("4. Past Tense (All verbs)")
+    print("5. Random (All forms)")
+    
+    mode = input("\nEnter your choice (1-5): ").strip()
+    
+    if mode == '1':
+        verbs_to_practice = {k: v for k, v in verbs.items() 
+                            if v.get('conjugation') == 'I' and not v.get('irregular')}
+        practice_tense = 'present'
+        print(f"\n📚 Practicing {len(verbs_to_practice)} Conjugation I verbs")
+    elif mode == '2':
+        verbs_to_practice = {k: v for k, v in verbs.items() 
+                            if v.get('conjugation') == 'II' and not v.get('irregular')}
+        practice_tense = 'present'
+        print(f"\n📚 Practicing {len(verbs_to_practice)} Conjugation II verbs")
+    elif mode == '3':
+        verbs_to_practice = {k: v for k, v in verbs.items() if v.get('irregular')}
+        practice_tense = 'both'
+        print(f"\n⚠️  Practicing {len(verbs_to_practice)} irregular verbs")
+    elif mode == '4':
+        verbs_to_practice = verbs
+        practice_tense = 'past'
+        print(f"\n📚 Practicing past tense for all verbs")
+    else:
+        verbs_to_practice = verbs
+        practice_tense = 'both'
+        print(f"\n📚 Random practice with all verb forms")
+    
+    # Convert to list and shuffle
+    verb_list = list(verbs_to_practice.items())
+    random.shuffle(verb_list)
+    
+    correct_count = 0
+    total_count = 0
+    session_aborted = False
+    
+    for infinitive, conjugations in verb_list:
+        print(f"\n{'=' * 60}")
+        print(f"Verb: {infinitive} ({conjugations['translation']})")
+        print(f"Conjugation: {conjugations['conjugation']}")
+        
+        # Show aspect with emoji
+        aspect = conjugations['aspect']
+        if aspect == 'perfective':
+            print(f"Aspect: ⚡ Perfective (completed action)")
+        else:
+            print(f"Aspect: 🔄 Imperfective (ongoing/repeated action)")
+        
+        if conjugations.get('irregular'):
+            print("⚠️  IRREGULAR VERB")
+        print(f"{'=' * 60}")
+        
+        # Practice present/future tense
+        if practice_tense in ['present', 'future', 'both']:
+            # Use correct tense based on aspect
+            tense_key = 'future' if conjugations['aspect'] == 'perfective' else 'present'
+            if tense_key in conjugations:
+                tense_label = "FUTURE" if tense_key == 'future' else "PRESENT"
+                print(f"\n--- {tense_label} TENSE ---")
+                for pronoun, correct_form in conjugations[tense_key].items():
+                    print(f"\n{pronoun}:")
+                    user_answer = input("Your answer: ").strip()
+                    
+                    if get_quit_input(user_answer):
+                        print("\n⚠️  Practice session aborted by user")
+                        session_aborted = True
+                        break
+                    
+                    total_count += 1
+                    if user_answer.lower() == correct_form.lower():
+                        display_feedback(True, correct_form)
+                        correct_count += 1
+                    else:
+                        display_feedback(False, correct_form)
+        
+        if session_aborted:
+            break
+        
+        # Practice past tense
+        if practice_tense in ['past', 'both'] and 'past' in conjugations:
+            print("\n--- PAST TENSE ---")
+            for gender, correct_form in conjugations['past'].items():
+                gender_label = f"он ({gender})" if gender == 'masculine' else \
+                              f"она ({gender})" if gender == 'feminine' else \
+                              f"оно ({gender})" if gender == 'neuter' else \
+                              f"они ({gender})"
+                
+                print(f"\n{gender_label}:")
+                user_answer = input("Your answer: ").strip()
+                
+                if get_quit_input(user_answer):
+                    print("\n⚠️  Practice session aborted by user")
+                    session_aborted = True
+                    break
+                
+                total_count += 1
+                if user_answer.lower() == correct_form.lower():
+                    display_feedback(True, correct_form)
+                    correct_count += 1
+                else:
+                    display_feedback(False, correct_form)
+        
+        if session_aborted:
+            break
+        
+        if not get_yes_no_input("\nContinue with next verb? (y/n): "):
+            break
+    
+    # Display results
+    if total_count > 0:
+        accuracy = (correct_count / total_count) * 100
+        print(f"\n{'=' * 60}")
+        print(f"  SESSION RESULTS")
+        print(f"{'=' * 60}")
+        print(f"Total questions: {total_count}")
+        print(f"Correct: {correct_count}")
+        print(f"Incorrect: {total_count - correct_count}")
+        print(f"Accuracy: {accuracy:.1f}%")
+        
+        if accuracy >= 90:
+            print("\n🌟 Excellent! You've mastered these conjugations!")
+        elif accuracy >= 75:
+            print("\n👍 Great work! Keep practicing!")
+        elif accuracy >= 60:
+            print("\n📚 Good effort! Review the patterns.")
+        else:
+            print("\n💪 Keep studying! Conjugations take practice!")
+        
+        print(f"{'=' * 60}\n")
+
 def main():
     print("\n" + "=" * 50)
     print("  🇷🇺 RUSSIAN DECLENSION TUTOR 🇷🇺")
@@ -604,13 +780,15 @@ def main():
         print("2. Learn Adjectives")
         print("3. Learn Personal Pronouns")
         print("4. Learn Adjective-Noun Pairs & Agreement")
-        print("5. Take a Quiz")
-        print("6. Exam Preparation Mode (RUS100)")
-        print("7. Word Practice (Vocabulary)")
-        print("8. View Declension Rules")
-        print("9. Exit")
+        print("5. Learn Verbs")  # NEW
+        print("6. Take a Quiz")
+        print("7. Exam Preparation Mode (RUS100)")
+        print("8. Word Practice (Vocabulary)")
+        print("9. View Declension Rules")
+        print("10. View Verb Conjugation Rules")
+        print("11. Exit")
         
-        choice = input("\nEnter your choice (1-9): ").strip()
+        choice = input("\nEnter your choice (1-11): ").strip()
         
         if choice == '1':
             learn_nouns()
@@ -621,18 +799,22 @@ def main():
         elif choice == '4':
             learn_word_pairs()
         elif choice == '5':
-            take_quiz()
+            learn_verbs()  # NEW
         elif choice == '6':
-            exam_preparation_mode()
+            take_quiz()
         elif choice == '7':
-            word_practice_mode()
+            exam_preparation_mode()
         elif choice == '8':
-            view_declension_rules()
+            word_practice_mode()
         elif choice == '9':
+            view_declension_rules()
+        elif choice == '10':
+            view_verb_conjugation_rules()
+        elif choice == '11':
             print("\n👋 Goodbye! Keep practicing your Russian!")
             break
         else:
-            print("\n❌ Invalid choice. Please select 1-9.")
+            print("\n❌ Invalid choice. Please select 1-11.")
 
 if __name__ == "__main__":
     main()
