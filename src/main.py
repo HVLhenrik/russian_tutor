@@ -571,16 +571,39 @@ def exam_preparation_mode():
 
 def word_practice_mode():
     """Word practice mode with intelligent tracking"""
-    word_practice = WordPractice()
-    
     while True:
         print("\n" + "=" * 50)
         print("  📚 WORD PRACTICE MODE")
         print("=" * 50)
+        print("\n1. Practice with English (SMARTool dataset)")
+        print("2. Practice with Norwegian (russisk_norsk)")
+        print("3. Return to Main Menu")
+        print("=" * 50)
+        
+        choice = input("\nEnter your choice (1-3): ").strip()
+        
+        if choice == '1':
+            _run_word_practice_session(use_norwegian=False)
+        elif choice == '2':
+            _run_word_practice_session(use_norwegian=True)
+        elif choice == '3':
+            break
+        else:
+            print("\n❌ Invalid choice. Please select 1-3.")
+
+def _run_word_practice_session(use_norwegian: bool):
+    """Run word practice session with selected language"""
+    word_practice = WordPractice(use_norwegian=use_norwegian)
+    
+    while True:
+        language = "Norwegian" if use_norwegian else "English"
+        print("\n" + "=" * 50)
+        print(f"  📚 WORD PRACTICE ({language})")
+        print("=" * 50)
         print("\n1. Start Practice Session (30 words)")
         print("2. View Your Statistics")
         print("3. Reset Statistics")
-        print("4. Return to Main Menu")
+        print("4. Return to Language Selection")
         print("=" * 50)
         
         choice = input("\nEnter your choice (1-4): ").strip()
@@ -593,8 +616,8 @@ def word_practice_mode():
             input("\nPress Enter to continue...")
         elif choice == '3':
             confirm = input("\n⚠️  Are you sure you want to reset all statistics? (yes/no): ")
-            if confirm.lower() == 'y':
-                word_practice.practice_db.reset_statistics()
+            if confirm.lower() == 'yes':
+                word_practice.db.reset_statistics()
             input("\nPress Enter to continue...")
         elif choice == '4':
             break

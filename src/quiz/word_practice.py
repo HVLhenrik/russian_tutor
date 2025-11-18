@@ -1,6 +1,7 @@
 from typing import List, Dict
 from data.word_practice_database import WordPracticeDatabase
 from data.vocabulary_extractor import VocabularyExtractor
+from data.russian_norwegian_extractor import RussianNorwegianExtractor
 from data.verb_database import VerbDatabase
 from utils.display import display_feedback
 from utils.input_helpers import get_quit_input
@@ -8,15 +9,28 @@ from utils.input_helpers import get_quit_input
 class WordPractice:
     """Interactive word practice with intelligent rotation and tracking"""
     
-    def __init__(self):
-        self.extractor = VocabularyExtractor()
+    def __init__(self, use_norwegian: bool = False):
+        self.use_norwegian = use_norwegian
+        
+        if use_norwegian:
+            self.extractor = RussianNorwegianExtractor()
+            self.target_language = "Norwegian"
+            self.translation_key = "norwegian"
+        else:
+            self.extractor = VocabularyExtractor()
+            self.target_language = "English"
+            self.translation_key = "english"
+        
         self.db = WordPracticeDatabase()
-        self.verb_db = VerbDatabase()  # Add verb database reference
+        self.verb_db = VerbDatabase()
         
         # Check if CSV file exists
         if not self.extractor.check_csv_file():
-            print("\n⚠️  Warning: Could not load vocabulary data")
-            print("   Make sure SMARTool_data_A1.csv is in the correct location")
+            print(f"\n⚠️  Warning: Could not load vocabulary data")
+            if use_norwegian:
+                print("   Make sure russisk_norsk.csv is in the correct location")
+            else:
+                print("   Make sure SMARTool_data_A1.csv is in the correct location")
 
     def normalize_answer(self, answer: str) -> str:
         """Normalize user answer for comparison"""
@@ -56,11 +70,11 @@ class WordPractice:
         """Display word information with statistics"""
         print(f"\n{'=' * 60}")
         print(f"Russian: {word['russian']}")
-        print(f"English: {word['english']}")
+        print(f"{self.target_language}: {word[self.translation_key]}")
         print(f"Part of Speech: {word.get('pos', 'N/A')}")
         
-        # Display aspect for verbs
-        if word.get('pos', '').startswith('V'):
+        # Display aspect for verbs (ONLY for English dataset)
+        if not self.use_norwegian and word.get('pos', '').startswith('V'):
             aspect = word.get('aspect', 'unknown')
             if aspect == 'perfective':
                 print(f"Aspect: ⚡ Perfective (completed action)")
@@ -89,7 +103,7 @@ class WordPractice:
     def run_practice_session(self, words_per_session: int = 30):
         """Run a complete practice session"""
         print("\n" + "=" * 60)
-        print("  📚 WORD PRACTICE SESSION")
+        print(f"  📚 WORD PRACTICE SESSION ({self.target_language})")
         print("=" * 60)
         
         # Get all available words
@@ -101,31 +115,47 @@ class WordPractice:
         
         print(f"\n📖 Total vocabulary size: {len(all_words)} unique words")
         
-        # Let user choose filter
-        print("\nPractice mode:")
-        print("1. All words (mixed)")
-        print("2. Nouns only")
-        print("3. Verbs only")
-        print("4. Adjectives only")
-        
-        choice = input("\nEnter choice (1-4, default=1): ").strip()
-        
-        if choice == '2':
-            words_pool = self.extractor.get_words_by_pos('N')
-            print(f"📝 Practicing nouns only ({len(words_pool)} words available)")
-        elif choice == '3':
-            words_pool = self.extractor.get_words_by_pos('V')
-            print(f"📝 Practicing verbs only ({len(words_pool)} words available)")
-        elif choice == '4':
-            words_pool = self.extractor.get_words_by_pos('A')
-            print(f"📝 Practicing adjectives only ({len(words_pool)} words available)")
+        # Different filter options based on dataset
+        if self.use_norwegian:
+            print("\nPractice mode:")
+            print("1. All words (mixed)")
+            print("2. Verbs only")
+            
+            choice = input("\nEnter choice (1-2, default=1): ").strip()
+            
+            if choice == '2':
+                words_pool = self.extractor.get_words_by_pos('V')
+                print(f"📝 Practicing verbs only ({len(words_pool)} words available)")
+            else:
+                words_pool = all_words
+                print(f"📝 Practicing all word types ({len(words_pool)} words available)")
         else:
-            words_pool = all_words
-            print(f"📝 Practicing all word types ({len(words_pool)} words available)")
+            # English dataset has full POS information
+            print("\nPractice mode:")
+            print("1. All words (mixed)")
+            print("2. Nouns only")
+            print("3. Verbs only")
+            print("4. Adjectives only")
+            
+            choice = input("\nEnter choice (1-4, default=1): ").strip()
+            
+            if choice == '2':
+                words_pool = self.extractor.get_words_by_pos('N')
+                print(f"📝 Practicing nouns only ({len(words_pool)} words available)")
+            elif choice == '3':
+                words_pool = self.extractor.get_words_by_pos('V')
+                print(f"📝 Practicing verbs only ({len(words_pool)} words available)")
+            elif choice == '4':
+                words_pool = self.extractor.get_words_by_pos('A')
+                print(f"📝 Practicing adjectives only ({len(words_pool)} words available)")
+            else:
+                words_pool = all_words
+                print(f"📝 Practicing all word types ({len(words_pool)} words available)")
         
-        # ALWAYS enrich verb data regardless of filter choice
-        words_pool = [self._enrich_word_data(w) if w.get('pos', '').startswith('V') else w 
-                     for w in words_pool]
+        # ALWAYS enrich verb data regardless of filter choice (only for English dataset)
+        if not self.use_norwegian:
+            words_pool = [self._enrich_word_data(w) if w.get('pos', '').startswith('V') else w 
+                         for w in words_pool]
         
         # Select words intelligently based on practice history
         practice_words = self.db.get_words_for_practice(
@@ -148,7 +178,7 @@ class WordPractice:
         # Practice each word
         for i, word in enumerate(practice_words, 1):
             russian = word['russian']
-            english = word['english']
+            translation = word[self.translation_key]
             pos = word['pos']
             
             # Add to session
@@ -164,20 +194,26 @@ class WordPractice:
                 print(f"Your history: {stats['correct']}/{stats['total_attempts']} correct ({accuracy:.0f}%) | Streak: {stats['streak']}")
             print(f"{'─' * 60}")
             
-            print(f"\n📖 Translate to Russian: {english}")
-            print(f"   Part of speech: {pos}")
+            print(f"\n📖 Translate to Russian: {translation}")
             
-            # Show aspect for verbs (always, not just when filtering for verbs)
-            if pos.startswith('V'):
-                aspect = word.get('aspect', 'unknown')
-                if aspect == 'perfective':
-                    print(f"   Aspect: ⚡ Perfective (completed action)")
-                elif aspect == 'imperfective':
-                    print(f"   Aspect: 🔄 Imperfective (ongoing/repeated action)")
+            # Only show POS for Norwegian if it's a verb (since we only know that reliably)
+            if self.use_norwegian:
+                if pos == 'V':
+                    print(f"   Part of speech: Verb")
+            else:
+                print(f"   Part of speech: {pos}")
                 
-                # Show if irregular
-                if word.get('irregular'):
-                    print(f"   ⚠️  IRREGULAR VERB")
+                # Show aspect for verbs (ONLY for English dataset)
+                if pos.startswith('V'):
+                    aspect = word.get('aspect', 'unknown')
+                    if aspect == 'perfective':
+                        print(f"   Aspect: ⚡ Perfective (completed action)")
+                    elif aspect == 'imperfective':
+                        print(f"   Aspect: 🔄 Imperfective (ongoing/repeated action)")
+                    
+                    # Show if irregular (only for English dataset)
+                    if word.get('irregular'):
+                        print(f"   ⚠️  IRREGULAR VERB")
             
             user_answer = input("\n   Your answer: ").strip()
             
@@ -190,7 +226,7 @@ class WordPractice:
             is_correct = self.check_answer(user_answer, russian)
             
             # Record attempt
-            self.db.record_attempt(russian, english, user_answer, is_correct)
+            self.db.record_attempt(russian, translation, user_answer, is_correct)
             
             if is_correct:
                 display_feedback(True, russian)
@@ -199,7 +235,7 @@ class WordPractice:
                 display_feedback(False, russian)
                 incorrect_words.append({
                     'russian': russian,
-                    'english': english,
+                    'translation': translation,
                     'user_answer': user_answer
                 })
                 
@@ -237,16 +273,13 @@ class WordPractice:
         self.db.end_session(session_id, correct_count, incorrect_count)
         
         # Display session results
-        if session_aborted:
-            print(f"\n📊 Partial session results ({words_practiced}/{len(practice_words)} words)")
-        
         self._display_session_results(
             correct_count, 
             words_practiced, 
             incorrect_words,
             aborted=session_aborted
         )
-    
+
     def _display_session_results(self, correct: int, total: int, 
                                   incorrect_words: List[Dict],
                                   aborted: bool = False):
@@ -282,7 +315,7 @@ class WordPractice:
             print("Words to review:")
             print("─" * 60)
             for item in incorrect_words:
-                print(f"\n  {item['english']}")
+                print(f"\n  {item['translation']}")
                 print(f"  ❌ Your answer: {item['user_answer']}")
                 print(f"  ✅ Correct: {item['russian']}")
         
