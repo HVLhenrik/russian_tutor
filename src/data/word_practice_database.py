@@ -34,13 +34,23 @@ class WordPracticeDatabase:
     def _migrate_data(self, data: Dict):
         """Migrate old data format to include new fields"""
         for word_key, word_data in data.get('words', {}).items():
+            # Add missing fields for new mastery calculation
             if 'mastery_level' not in word_data:
                 word_data['mastery_level'] = 0
             if 'last_practiced' not in word_data:
                 word_data['last_practiced'] = None
             if 'streak' not in word_data:
                 word_data['streak'] = 0
-    
+            if 'attempts_history' not in word_data:
+                word_data['attempts_history'] = []
+            if 'first_seen' not in word_data:
+                # Use last_practiced as fallback, or current time if not available
+                word_data['first_seen'] = word_data.get('last_practiced', datetime.now().isoformat())
+            
+            # Ensure 'russian' field exists (for backward compatibility)
+            if 'russian' not in word_data:
+                word_data['russian'] = word_key
+
     def _create_empty_db(self) -> Dict:
         """Create empty database structure"""
         return {
@@ -54,36 +64,210 @@ class WordPracticeDatabase:
         with open(self.db_file, 'w', encoding='utf-8') as f:
             json.dump(self.data, f, ensure_ascii=False, indent=2)
     
-    def record_attempt(self, russian_word: str, english_word: str, user_answer: str, is_correct: bool):
-        """Record a practice attempt for a word"""
-        if russian_word not in self.data['words']:
-            self.data['words'][russian_word] = {
-                'english': english_word,
+    def _calculate_mastery_level(self, stats: Dict) -> int:
+        """
+        Calculate mastery level (0-5) using multiple factors
+        
+        Mastery Criteria:
+        Level 0: Never practiced or <20% accuracy
+        Level 1: 20-40% accuracy, inconsistent
+        Level 2: 40-60% accuracy, needs more practice
+        Level 3: 60-80% accuracy, showing progress
+        Level 4: 80-90% accuracy, nearly mastered
+        Level 5: 90%+ accuracy with retention over time
+        """
+        from datetime import datetime, timedelta
+        
+        total_attempts = stats.get('total_attempts', 0)
+        correct = stats.get('correct', 0)
+        streak = stats.get('streak', 0)
+        last_practiced = stats.get('last_practiced')
+        
+        # Level 0: No practice yet
+        if total_attempts == 0:
+            return 0
+        
+        # Calculate base accuracy
+        accuracy = (correct / total_attempts) * 100
+        
+        # Factor 1: Base accuracy score (0-5 points)
+        if accuracy >= 90:
+            accuracy_points = 5.0
+        elif accuracy >= 80:
+            accuracy_points = 4.0
+        elif accuracy >= 70:
+            accuracy_points = 3.5
+        elif accuracy >= 60:
+            accuracy_points = 3.0
+        elif accuracy >= 50:
+            accuracy_points = 2.5
+        elif accuracy >= 40:
+            accuracy_points = 2.0
+        elif accuracy >= 30:
+            accuracy_points = 1.5
+        elif accuracy >= 20:
+            accuracy_points = 1.0
+        else:
+            accuracy_points = 0.5
+        
+        # Factor 2: Consistency bonus (streak modifier: -1.0 to +1.0)
+        if streak >= 5:
+            consistency_bonus = 1.0  # Very consistent
+        elif streak >= 3:
+            consistency_bonus = 0.5  # Good consistency
+        elif streak >= 1:
+            consistency_bonus = 0.2  # Some consistency
+        elif streak == 0:
+            consistency_bonus = 0.0  # Neutral
+        elif streak >= -2:
+            consistency_bonus = -0.3  # Recent mistakes
+        elif streak >= -4:
+            consistency_bonus = -0.6  # Struggling
+        else:
+            consistency_bonus = -1.0  # Very inconsistent
+        
+        # Factor 3: Experience modifier (need minimum attempts)
+        # Fewer attempts = less confident in mastery
+        if total_attempts >= 10:
+            experience_modifier = 1.0  # Full confidence
+        elif total_attempts >= 5:
+            experience_modifier = 0.8  # Good sample size
+        elif total_attempts >= 3:
+            experience_modifier = 0.6  # Moderate confidence
+        else:
+            experience_modifier = 0.4  # Low confidence
+        
+        # Factor 4: Recency penalty (time decay)
+        recency_modifier = 1.0
+        if last_practiced:
+            try:
+                last_date = datetime.fromisoformat(last_practiced)
+                days_since = (datetime.now() - last_date).days
+                
+                # Apply decay based on how long ago
+                if days_since <= 1:
+                    recency_modifier = 1.0  # Very recent
+                elif days_since <= 3:
+                    recency_modifier = 0.95  # Recent
+                elif days_since <= 7:
+                    recency_modifier = 0.9  # Within a week
+                elif days_since <= 14:
+                    recency_modifier = 0.8  # Two weeks
+                elif days_since <= 30:
+                    recency_modifier = 0.7  # A month
+                else:
+                    recency_modifier = 0.6  # Very old, might be forgotten
+            except (ValueError, TypeError):
+                recency_modifier = 0.8  # Unknown date, slight penalty
+        
+        # Calculate final mastery score
+        mastery_score = (accuracy_points + consistency_bonus) * experience_modifier * recency_modifier
+        
+        # Convert to 0-5 level (with strict requirements for level 5)
+        if mastery_score >= 5.5 and accuracy >= 90 and total_attempts >= 5:
+            return 5  # True mastery: high accuracy, consistent, experienced
+        elif mastery_score >= 4.5:
+            return 4  # Nearly mastered
+        elif mastery_score >= 3.5:
+            return 3  # Good progress
+        elif mastery_score >= 2.5:
+            return 2  # Learning
+        elif mastery_score >= 1.5:
+            return 1  # Beginner
+        else:
+            return 0  # Struggling or no practice
+
+    def record_attempt(self, russian: str, translation: str, user_answer: str, is_correct: bool):
+        """Record a practice attempt and update statistics"""
+        from datetime import datetime
+        
+        # Initialize word if not exists
+        if russian not in self.data['words']:
+            self.data['words'][russian] = {
+                'russian': russian,
+                'english': translation,  # Keep 'english' for backward compatibility
+                'translation': translation,  # Also store as 'translation'
                 'total_attempts': 0,
                 'correct': 0,
                 'incorrect': 0,
                 'streak': 0,
-                'last_practiced': None,
-                'mastery_level': 0  # 0-5 scale
+                'mastery_level': 0,
+                'first_seen': datetime.now().isoformat(),
+                'last_practiced': datetime.now().isoformat(),
+                'attempts_history': []
             }
         
-        word_data = self.data['words'][russian_word]
-        word_data['total_attempts'] += 1
-        word_data['last_practiced'] = datetime.now().isoformat()
+        word_data = self.data['words'][russian]
         
+        # Ensure all required fields exist (for backward compatibility)
+        if 'attempts_history' not in word_data:
+            word_data['attempts_history'] = []
+        if 'first_seen' not in word_data:
+            word_data['first_seen'] = word_data.get('last_practiced', datetime.now().isoformat())
+        if 'russian' not in word_data:
+            word_data['russian'] = russian
+        
+        # Update counts
+        word_data['total_attempts'] += 1
         if is_correct:
             word_data['correct'] += 1
-            word_data['streak'] += 1
-            # Increase mastery level (max 5)
-            if word_data['streak'] >= 5 and word_data['mastery_level'] < 5:
-                word_data['mastery_level'] = min(5, word_data['mastery_level'] + 1)
+            word_data['streak'] = max(0, word_data['streak']) + 1
         else:
             word_data['incorrect'] += 1
-            word_data['streak'] = 0
-            # Decrease mastery level on mistakes
-            word_data['mastery_level'] = max(0, word_data['mastery_level'] - 1)
+            word_data['streak'] = min(0, word_data['streak']) - 1
         
+        # Update timestamps
+        word_data['last_practiced'] = datetime.now().isoformat()
+        
+        # Store attempt in history (keep last 20 attempts)
+        word_data['attempts_history'].append({
+            'date': datetime.now().isoformat(),
+            'correct': is_correct,
+            'user_answer': user_answer
+        })
+        if len(word_data['attempts_history']) > 20:
+            word_data['attempts_history'] = word_data['attempts_history'][-20:]
+        
+        # Recalculate mastery level using new algorithm
+        word_data['mastery_level'] = self._calculate_mastery_level(word_data)
+        
+        # Save to file
         self._save_data()
+
+    def get_statistics(self) -> Dict:
+        """Get comprehensive practice statistics"""
+        total_words = len(self.data['words'])
+        total_attempts = sum(w['total_attempts'] for w in self.data['words'].values())
+        total_correct = sum(w['correct'] for w in self.data['words'].values())
+        total_incorrect = sum(w['incorrect'] for w in self.data['words'].values())
+        
+        # Count mastered words (level 4-5 with high accuracy)
+        mastered_words = sum(
+            1 for w in self.data['words'].values()
+            if w['mastery_level'] >= 4 and 
+            (w['correct'] / w['total_attempts'] * 100 >= 80 if w['total_attempts'] > 0 else False)
+        )
+        
+        # Count words needing review (level 0-2 or accuracy < 60%)
+        needs_review = sum(
+            1 for w in self.data['words'].values()
+            if w['mastery_level'] <= 2 or
+            (w['correct'] / w['total_attempts'] * 100 < 60 if w['total_attempts'] > 0 else True)
+        )
+        
+        # Calculate overall accuracy
+        accuracy = (total_correct / total_attempts * 100) if total_attempts > 0 else 0
+        
+        return {
+            'total_words_practiced': total_words,
+            'total_attempts': total_attempts,
+            'total_correct': total_correct,
+            'total_incorrect': total_incorrect,
+            'accuracy': accuracy,
+            'mastered_words': mastered_words,
+            'needs_review': needs_review,
+            'total_sessions': len(self.data['sessions'])
+        }
     
     def get_word_stats(self, russian_word: str) -> Dict:
         """Get statistics for a specific word"""
