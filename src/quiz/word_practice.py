@@ -60,8 +60,24 @@ class WordPractice:
         
         print(f"\n📖 Total vocabulary size: {len(all_words)} unique words")
         
-        # Only show filter options if using English mode (has POS data)
-        if not self.use_norwegian:
+        # Show appropriate filter options based on mode
+        if self.use_norwegian:
+            # Norwegian mode - filter by verb prefix "å"
+            print("\nPractice mode:")
+            print("1. All words (mixed)")
+            print("2. Verbs only (å verbs)")
+            
+            choice = input("\nEnter choice (1-2, default=1): ").strip()
+            
+            if choice == '2':
+                # Filter words where Norwegian translation starts with "å"
+                words_pool = [w for w in all_words if w.get('norwegian', '').startswith('å')]
+                print(f"📝 Practicing verbs only ({len(words_pool)} words available)")
+            else:
+                words_pool = all_words
+                print(f"📝 Practicing all words ({len(words_pool)} words available)")
+        else:
+            # English mode - filter by POS
             print("\nPractice mode:")
             print("1. All words (mixed)")
             print("2. Nouns only")
@@ -82,12 +98,13 @@ class WordPractice:
             else:
                 words_pool = all_words
                 print(f"📝 Practicing all word types ({len(words_pool)} words available)")
-        else:
-            # Norwegian mode - no filtering by POS
-            words_pool = all_words
-            print(f"📝 Practicing all words ({len(words_pool)} words available)")
+        
+        if not words_pool:
+            print("\n❌ No words available for this filter.")
+            return
         
         # Select words intelligently based on practice history
+        # Progress tracking uses Russian word as key, so it works across both modes
         practice_words = self.db.get_words_for_practice(
             words_pool, 
             num_words=min(words_per_session, len(words_pool))
@@ -119,16 +136,17 @@ class WordPractice:
             
             pos = word.get('pos', '')
             
-            # Add to session
+            # Add to session (uses Russian as key for consistent tracking)
             self.db.add_word_to_session(session_id, russian)
             
-            # Get stats for this specific word
+            # Get stats for this specific word (always based on Russian word)
             stats = self.db.get_word_stats(russian)
             
             print(f"\n{'─' * 60}")
             print(f"Word {i}/{len(practice_words)}")
             
-            # Only show stats if the word has been practiced before
+            # Show stats if the word has been practiced before
+            # Stats are consistent across both English and Norwegian modes
             if stats and stats['total_attempts'] > 0:
                 accuracy = (stats['correct'] / stats['total_attempts'] * 100)
                 mastery_stars = '⭐' * stats['mastery_level']
@@ -136,15 +154,17 @@ class WordPractice:
             
             print(f"{'─' * 60}")
             
-            # Display based on direction
+            # Display question based on direction
             if self.use_norwegian:
                 print(f"\n📖 Translate to Russian: {translation}")
+                # Show if it's a verb by checking "å" prefix
+                if translation.startswith('å'):
+                    print(f"   (Verb)")
             else:
                 print(f"\n📖 Translate to {target_lang}: {translation}")
-            
-            # Only show POS for English mode (Norwegian CSV doesn't have it)
-            if not self.use_norwegian and pos:
-                print(f"   Part of speech: {pos}")
+                # Only show POS for English mode
+                if pos:
+                    print(f"   Part of speech: {pos}")
             
             user_answer = input("\n   Your answer: ").strip()
             
@@ -157,7 +177,7 @@ class WordPractice:
             # Check answer against Russian word
             is_correct = self.check_answer(user_answer, russian)
             
-            # Record attempt - always use Russian as the key
+            # Record attempt - always use Russian as the key for consistent tracking
             self.db.record_attempt(russian, translation, user_answer, is_correct)
             
             if is_correct:
