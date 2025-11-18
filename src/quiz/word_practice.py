@@ -2,7 +2,6 @@ from typing import List, Dict
 from data.word_practice_database import WordPracticeDatabase
 from data.vocabulary_extractor import VocabularyExtractor
 from data.russian_norwegian_extractor import RussianNorwegianExtractor
-from data.verb_database import VerbDatabase
 from utils.display import display_feedback
 from utils.input_helpers import get_quit_input
 
@@ -14,23 +13,15 @@ class WordPractice:
         
         if use_norwegian:
             self.extractor = RussianNorwegianExtractor()
-            self.target_language = "Norwegian"
-            self.translation_key = "norwegian"
         else:
             self.extractor = VocabularyExtractor()
-            self.target_language = "English"
-            self.translation_key = "english"
         
         self.db = WordPracticeDatabase()
-        self.verb_db = VerbDatabase()
         
         # Check if CSV file exists
         if not self.extractor.check_csv_file():
-            print(f"\n⚠️  Warning: Could not load vocabulary data")
-            if use_norwegian:
-                print("   Make sure russisk_norsk.csv is in the correct location")
-            else:
-                print("   Make sure SMARTool_data_A1.csv is in the correct location")
+            print("\n⚠️  Warning: Could not load vocabulary data")
+            print("   Make sure the CSV file is in the correct location")
 
     def normalize_answer(self, answer: str) -> str:
         """Normalize user answer for comparison"""
@@ -54,56 +45,10 @@ class WordPractice:
         
         return False
     
-    def _enrich_word_data(self, word: Dict) -> Dict:
-        """Enrich word data with verb conjugation info if applicable"""
-        # If it's a verb, try to get more reliable aspect info from VerbDatabase
-        if word.get('pos', '').startswith('V'):
-            verb_info = self.verb_db.get_verb(word['russian'])
-            if verb_info:
-                # Update aspect from VerbDatabase (more reliable than CSV parsing)
-                word['aspect'] = verb_info.get('aspect', word.get('aspect', 'unknown'))
-                word['irregular'] = verb_info.get('irregular', False)
-        
-        return word
-
-    def _display_word_info(self, word: Dict, stats: Dict):
-        """Display word information with statistics"""
-        print(f"\n{'=' * 60}")
-        print(f"Russian: {word['russian']}")
-        print(f"{self.target_language}: {word[self.translation_key]}")
-        print(f"Part of Speech: {word.get('pos', 'N/A')}")
-        
-        # Display aspect for verbs (ONLY for English dataset)
-        if not self.use_norwegian and word.get('pos', '').startswith('V'):
-            aspect = word.get('aspect', 'unknown')
-            if aspect == 'perfective':
-                print(f"Aspect: ⚡ Perfective (completed action)")
-            elif aspect == 'imperfective':
-                print(f"Aspect: 🔄 Imperfective (ongoing/repeated action)")
-            else:
-                print(f"Aspect: ❓ Unknown")
-            
-            # Show if irregular
-            if word.get('irregular'):
-                print(f"⚠️  IRREGULAR VERB")
-        
-        print(f"Level: {word.get('level', 'N/A')}")
-        
-        if stats['total_attempts'] > 0:
-            accuracy = (stats['correct'] / stats['total_attempts']) * 100
-            print(f"\n📊 Your Statistics:")
-            print(f"   Accuracy: {accuracy:.1f}% ({stats['correct']}/{stats['total_attempts']})")
-            print(f"   Mastery: {'⭐' * stats['mastery_level']} ({stats['mastery_level']}/5)")
-            print(f"   Current Streak: {stats['streak']}")
-        else:
-            print(f"\n🆕 New word - never practiced before")
-        
-        print(f"{'=' * 60}\n")
-
     def run_practice_session(self, words_per_session: int = 30):
         """Run a complete practice session"""
         print("\n" + "=" * 60)
-        print(f"  📚 WORD PRACTICE SESSION ({self.target_language})")
+        print("  📚 WORD PRACTICE SESSION")
         print("=" * 60)
         
         # Get all available words
@@ -115,22 +60,8 @@ class WordPractice:
         
         print(f"\n📖 Total vocabulary size: {len(all_words)} unique words")
         
-        # Different filter options based on dataset
-        if self.use_norwegian:
-            print("\nPractice mode:")
-            print("1. All words (mixed)")
-            print("2. Verbs only")
-            
-            choice = input("\nEnter choice (1-2, default=1): ").strip()
-            
-            if choice == '2':
-                words_pool = self.extractor.get_words_by_pos('V')
-                print(f"📝 Practicing verbs only ({len(words_pool)} words available)")
-            else:
-                words_pool = all_words
-                print(f"📝 Practicing all word types ({len(words_pool)} words available)")
-        else:
-            # English dataset has full POS information
+        # Only show filter options if using English mode (has POS data)
+        if not self.use_norwegian:
             print("\nPractice mode:")
             print("1. All words (mixed)")
             print("2. Nouns only")
@@ -151,11 +82,10 @@ class WordPractice:
             else:
                 words_pool = all_words
                 print(f"📝 Practicing all word types ({len(words_pool)} words available)")
-        
-        # ALWAYS enrich verb data regardless of filter choice (only for English dataset)
-        if not self.use_norwegian:
-            words_pool = [self._enrich_word_data(w) if w.get('pos', '').startswith('V') else w 
-                         for w in words_pool]
+        else:
+            # Norwegian mode - no filtering by POS
+            words_pool = all_words
+            print(f"📝 Practicing all words ({len(words_pool)} words available)")
         
         # Select words intelligently based on practice history
         practice_words = self.db.get_words_for_practice(
@@ -178,42 +108,43 @@ class WordPractice:
         # Practice each word
         for i, word in enumerate(practice_words, 1):
             russian = word['russian']
-            translation = word[self.translation_key]
-            pos = word['pos']
+            
+            # Use correct translation based on language mode
+            if self.use_norwegian:
+                translation = word.get('norwegian', word.get('english', ''))
+                target_lang = "Norwegian"
+            else:
+                translation = word.get('english', word.get('norwegian', ''))
+                target_lang = "English"
+            
+            pos = word.get('pos', '')
             
             # Add to session
             self.db.add_word_to_session(session_id, russian)
             
-            # Get stats for motivation
+            # Get stats for this specific word
             stats = self.db.get_word_stats(russian)
             
             print(f"\n{'─' * 60}")
             print(f"Word {i}/{len(practice_words)}")
-            if stats['total_attempts'] > 0:
+            
+            # Only show stats if the word has been practiced before
+            if stats and stats['total_attempts'] > 0:
                 accuracy = (stats['correct'] / stats['total_attempts'] * 100)
-                print(f"Your history: {stats['correct']}/{stats['total_attempts']} correct ({accuracy:.0f}%) | Streak: {stats['streak']}")
+                mastery_stars = '⭐' * stats['mastery_level']
+                print(f"Your history: {stats['correct']}/{stats['total_attempts']} correct ({accuracy:.0f}%) | {mastery_stars}")
+            
             print(f"{'─' * 60}")
             
-            print(f"\n📖 Translate to Russian: {translation}")
-            
-            # Only show POS for Norwegian if it's a verb (since we only know that reliably)
+            # Display based on direction
             if self.use_norwegian:
-                if pos == 'V':
-                    print(f"   Part of speech: Verb")
+                print(f"\n📖 Translate to Russian: {translation}")
             else:
+                print(f"\n📖 Translate to {target_lang}: {translation}")
+            
+            # Only show POS for English mode (Norwegian CSV doesn't have it)
+            if not self.use_norwegian and pos:
                 print(f"   Part of speech: {pos}")
-                
-                # Show aspect for verbs (ONLY for English dataset)
-                if pos.startswith('V'):
-                    aspect = word.get('aspect', 'unknown')
-                    if aspect == 'perfective':
-                        print(f"   Aspect: ⚡ Perfective (completed action)")
-                    elif aspect == 'imperfective':
-                        print(f"   Aspect: 🔄 Imperfective (ongoing/repeated action)")
-                    
-                    # Show if irregular (only for English dataset)
-                    if word.get('irregular'):
-                        print(f"   ⚠️  IRREGULAR VERB")
             
             user_answer = input("\n   Your answer: ").strip()
             
@@ -223,9 +154,10 @@ class WordPractice:
                 session_aborted = True
                 break
             
+            # Check answer against Russian word
             is_correct = self.check_answer(user_answer, russian)
             
-            # Record attempt
+            # Record attempt - always use Russian as the key
             self.db.record_attempt(russian, translation, user_answer, is_correct)
             
             if is_correct:
@@ -266,13 +198,16 @@ class WordPractice:
                     break
         
         # Calculate words practiced (only count words that were attempted)
-        words_practiced = i if not session_aborted else i
+        words_practiced = i if session_aborted else len(practice_words)
         
         # End session
         incorrect_count = len(incorrect_words)
         self.db.end_session(session_id, correct_count, incorrect_count)
         
         # Display session results
+        if session_aborted:
+            print(f"\n📊 Partial session results ({words_practiced}/{len(practice_words)} words)")
+        
         self._display_session_results(
             correct_count, 
             words_practiced, 

@@ -185,92 +185,152 @@ def learn_adjectives():
     adjectives = adj_db.get_all_adjectives()
     
     print("\n=== LEARN RUSSIAN ADJECTIVES ===\n")
-    print("💡 Tip: Review the declension rules before practicing!")
+    print("💡 Tip: Review the adjective declension rules before practicing!")
     print("💡 Type 'quit' or 'q' at any time to exit")
     
     if get_yes_no_input("\nWould you like to view the adjective declension rules first? (y/n): "):
         display_adjective_declension_rules()
         input("\nPress Enter to continue...")
     
-    # Get random sample of adjectives to practice
+    # Choose practice mode
+    print("\nChoose practice mode:")
+    print("1. All forms (mixed)")
+    print("2. Female forms only")
+    print("3. Male forms only")
+    print("4. Neuter forms only")
+    print("5. Plural forms only")
+    
+    mode = input("\nEnter your choice (1-5): ").strip()
+    
+    practice_gender = None
+    if mode == '2':
+        practice_gender = 'feminine'
+        print(f"\n📝 Practicing female adjective forms")
+    elif mode == '3':
+        practice_gender = 'masculine'
+        print(f"\n📝 Practicing male adjective forms")
+    elif mode == '4':
+        practice_gender = 'neuter'
+        print(f"\n📝 Practicing neuter adjective forms")
+    elif mode == '5':
+        practice_gender = 'plural'
+        print(f"\n📝 Practicing plural adjective forms")
+    else:
+        print(f"\n📝 Practicing all adjective forms")
+    
+    # Convert to list and shuffle
     adj_list = list(adjectives.items())
     random.shuffle(adj_list)
     
-    # Case order for systematic practice (exam cases only)
-    case_order = ['nominative', 'accusative', 'genitive', 'dative', 'prepositional']
+    if not adj_list:
+        print("\n❌ No adjectives found in database.")
+        return
+    
+    print(f"\n📚 Practicing {len(adj_list)} adjectives")
+    print("=" * 40)
     
     session_aborted = False
     
     for adj_word, declensions in adj_list:
-        print(f"\n{'=' * 40}")
+        print(f"\n{'=' * 60}")
         print(f"Adjective: {adj_word}")
-        print(f"{'=' * 40}")
+        print(f"{'=' * 60}")
         
-        # Don't show the forms - that's what they need to learn!
-        print("\n" + "-" * 40)
-        print("Decline this adjective (masculine forms):")
-        print("-" * 40)
-        
-        # Practice masculine forms
-        correct_in_row = 0
-        
-        for case in case_order:
-            # Access the masculine forms correctly
-            if 'masculine' not in declensions or case not in declensions['masculine']:
-                continue
-                
-            correct_form = declensions['masculine'][case]
-            print(f"\n{case.capitalize()} (masculine):")
-            user_answer = input("Your answer: ").strip()
-            
-            # Check for quit
-            if get_quit_input(user_answer):
-                print("\n⚠️  Practice session aborted by user")
-                session_aborted = True
-                break
-            
-            if user_answer.lower() == correct_form.lower():
-                display_feedback(True, correct_form)
-                correct_in_row += 1
-            else:
-                display_feedback(False, correct_form)
-                correct_in_row = 0
-                
-                # Make user write correct answer
-                print(f"\n✍️  Please write the correct answer: {correct_form}")
-                for attempt in range(3):
-                    practice_answer = input("   Type it here: ").strip()
+        # Practice forms based on selected gender
+        if practice_gender == 'feminine':
+            # Practice feminine forms only
+            if 'feminine' in declensions:
+                print("\n--- FEMININE FORMS ---")
+                for case, correct_form in declensions['feminine'].items():
+                    print(f"\n{case} (feminine):")
+                    user_answer = input("Your answer: ").strip()
                     
-                    if get_quit_input(practice_answer):
+                    if get_quit_input(user_answer):
                         print("\n⚠️  Practice session aborted by user")
                         session_aborted = True
                         break
                     
-                    if practice_answer.lower() == correct_form.lower():
-                        print("   ✅ Correct! Moving on...")
-                        break
-                    elif attempt < 2:
-                        print(f"   ❌ Try again ({attempt + 2}/3)")
+                    if user_answer.lower() == correct_form.lower():
+                        display_feedback(True, correct_form)
                     else:
-                        print(f"   ⚠️  The correct answer is: {correct_form}")
-                
-                if session_aborted:
-                    break
+                        display_feedback(False, correct_form)
+        elif practice_gender == 'masculine':
+            # Practice masculine forms only
+            if 'masculine' in declensions:
+                print("\n--- MASCULINE FORMS ---")
+                for case, correct_form in declensions['masculine'].items():
+                    print(f"\n{case} (masculine):")
+                    user_answer = input("Your answer: ").strip()
+                    
+                    if get_quit_input(user_answer):
+                        print("\n⚠️  Practice session aborted by user")
+                        session_aborted = True
+                        break
+                    
+                    if user_answer.lower() == correct_form.lower():
+                        display_feedback(True, correct_form)
+                    else:
+                        display_feedback(False, correct_form)
+        elif practice_gender == 'neuter':
+            # Practice neuter forms only
+            if 'neuter' in declensions:
+                print("\n--- NEUTER FORMS ---")
+                for case, correct_form in declensions['neuter'].items():
+                    print(f"\n{case} (neuter):")
+                    user_answer = input("Your answer: ").strip()
+                    
+                    if get_quit_input(user_answer):
+                        print("\n⚠️  Practice session aborted by user")
+                        session_aborted = True
+                        break
+                    
+                    if user_answer.lower() == correct_form.lower():
+                        display_feedback(True, correct_form)
+                    else:
+                        display_feedback(False, correct_form)
+        elif practice_gender == 'plural':
+            # Practice plural forms only
+            if 'plural' in declensions:
+                print("\n--- PLURAL FORMS ---")
+                for case, correct_form in declensions['plural'].items():
+                    print(f"\n{case} (plural):")
+                    user_answer = input("Your answer: ").strip()
+                    
+                    if get_quit_input(user_answer):
+                        print("\n⚠️  Practice session aborted by user")
+                        session_aborted = True
+                        break
+                    
+                    if user_answer.lower() == correct_form.lower():
+                        display_feedback(True, correct_form)
+                    else:
+                        display_feedback(False, correct_form)
+        else:
+            # Practice all forms (original behavior)
+            for gender, gender_declensions in declensions.items():
+                gender_label = gender.capitalize()
+                print(f"\n--- {gender_label.upper()} FORMS ---")
+                for case, correct_form in gender_declensions.items():
+                    print(f"\n{case} ({gender}):")
+                    user_answer = input("Your answer: ").strip()
+                    
+                    if get_quit_input(user_answer):
+                        print("\n⚠️  Practice session aborted by user")
+                        session_aborted = True
+                        break
+                    
+                    if user_answer.lower() == correct_form.lower():
+                        display_feedback(True, correct_form)
+                    else:
+                        display_feedback(False, correct_form)
         
         if session_aborted:
             break
         
-        # Show summary after completing the adjective
-        if correct_in_row == len([c for c in case_order if 'masculine' in declensions and c in declensions['masculine']]):
-            print(f"\n🌟 Perfect! You got all forms of '{adj_word}' correct!")
-        
         if not get_yes_no_input("\nContinue with next adjective? (y/n): "):
             break
     
-    if session_aborted:
-        print("\n⚠️ Practice session incomplete")
-    else:
-        print("\n✅ Finished learning adjectives!\n")
+    print("\n✅ Adjective practice completed!")
 
 def learn_pronouns():
     """Interactive personal pronoun learning with practice quiz"""
