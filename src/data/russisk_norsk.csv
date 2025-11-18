@@ -1,6 +1,6 @@
 russisk;norsk
 банк;bank
-кот;катт
+кот;katt
 кто;hvem
 мама;mamma
 окно;vindu
@@ -11,7 +11,7 @@ russisk;norsk
 собака;hund
 там;der
 что;hva
-ето;det dette
+это;det dette
 автобус;buss
 аптека;apotek
 врач;lege
@@ -39,25 +39,24 @@ russisk;norsk
 театр;teater
 урок;leksjon
 алло!;hei!(i telefon)
-б + akkussativ;i (om lokasjon)
+в;i (om lokasjon)
 девочка;jente
 завтрак;frokost
 завтракать;å spise frokost (imperfektiv)
-здравствуйте! pl (sg - здравствуй!);god dag!
+здравствуйте!;god dag!
 играть;å spille (imperfektiv)
 картина;bilde
 компьютер;datamaskin
 мальчик;gutt
 музей;museum
-на + akkussativ;på (om lokasjon)
+на;på (om lokasjon)
 отдыхать;å slappe av,hvile,feriere (imperfektiv)
 работать;å arbeide (imperfektiv)
 работа;arbeid
-словарь маsk;ordbok
+словарь;ordbok mask
 ты;du
-учитель mask;lærer
+учитель;lærer mask
 школа;skole
-я;jeg
 бабушка;bestemor
 дедушка;bestefar
 девушка;ung kvinne,kjæreste
@@ -79,17 +78,17 @@ russisk;norsk
 читать;å lese (imperfektiv)
 аудитория;forelesningssal
 библиотека;bibliotek
-дверь fem;dør
+дверь;dør fem
 квартира;leilighet
 класс;klasse
 кресло;lenestol
 кухня;kjøkken
 лампа;lampe
 лежать;å ligge (imperfektiv)
-мебель fem;møbler
-площадь fem;plass
+мебель;møbler fem
+площадь;plass fem
 полка;hylle
-почта;posтkontor
+почта;postkontor
 ресторан;restaurant
 рецепт;oppskrift
 стадион;stadion
@@ -107,7 +106,7 @@ russisk;norsk
 гитара;gitar
 говорить (по телефону);å snakke (i telefon) (imperfektiv)
 гулять;å gå tur,spasere (imperfektiv)
-день masc;dag
+день;dag masc
 диван;sofa
 добрый;god,snill
 добрый вечер;god kveld
@@ -115,8 +114,8 @@ russisk;norsk
 любить;å like,elske (imperfektiv)
 музыка;musikk
 неделя;uke
-ночь fem;natt
-о + lokativ;оm,på
+ночь;natt fem
+о;оm,på
 обед;lunsj
 отдых;hvile,fri
 повторять;å repetere (imperfektiv)
@@ -134,7 +133,7 @@ russisk;norsk
 большой;stor
 город;by
 жёлтый;gul
-зелйёный;grønn
+зелёный;grønn
 красивый;vakker
 красный;rød
 магазин;butikk
@@ -158,7 +157,7 @@ russisk;norsk
 мясо;kjøtt
 обедать;å spise lunsj (imperfektiv)
 пиво;øl
-продуйкт;matvare
+продукт;matvare
 рыба;fisk
 салат;salat
 сок;juice
@@ -167,16 +166,16 @@ russisk;norsk
 ужин;middag (kveldsmat)
 ужинать;å spise middag (kveldsmat) (imperfektiv)
 фрукт;frukt
-жлеб;brød
+хлеб;brød
 чай;te
 чашка;kopp
 балет;ballett
 газета;avis
-дочь fem;datter
+дочь;datter fem
 журнал;tidsskrift
 концерт;konsert
-мать fem;mor
-отец masc;far
+мать;mor fem
+отец;far masc
 писать;å skrive (imperfektiv)
 письмо;brev
 покупать;å kjøpe (imperfektiv)
@@ -185,7 +184,7 @@ russisk;norsk
 теннис;tennis
 фильм;film
 футбол;fotball
-видеть;å se (еngelsk to see) (imperfektiv)
+видеть;å se (engelsk to see) (imperfektiv)
 гитара;gitar
 игра;spill
 карандаш;blyant
@@ -200,9 +199,9 @@ russisk;norsk
 смотреть;å se (engelsk to look) (imperfektiv)
 время;tid
 знать;å vite,kjenne (imperfektiv)
-из + genitiv;fra
-извините! pl (sg - извини!);unnskyld!
-имя неut;navn
+из;fra
+извините!;unnskyld! pl (sg - извини!)
+имя;navn неut
 иностранный;utenlandsk
 интересный;interessant
 история;historie,fortelling
@@ -221,20 +220,20 @@ russisk;norsk
 адрес;adresse
 бассейн;svømmebasseng
 билет;billett
-ежать;å kjøre,reise (i en bestemt retning) (imperfektiv)
+ехать;å kjøre,reise (i en bestemt retning) (imperfektiv)
 идти;å gå (i en bestemt retning) (imperfektiv)
 мочь;å kunne (imperfektiv)
 надо;nødvendig
 потом;senere,etterpå
-рад (рада,рады);glad
+рад (рада, рады);glad
 сначала;først
 ходить;å gå (uten bestemt retning) (imperfektiv)
 хотеть;å ville,ønske (imperfektiv)
-весь (вся,всё,все);hele,аll
-дождь masc;regn
+весь (вся, всё, все);hele, all
+дождь;regn masc
 есть;å spise (imperfektiv)
 который;som,hvilken
-опятрь;igjen
+опять;igjen
 пить;å drikke (imperfektiv)
 погода;vær
 рядом;ved siden av,inntil
@@ -244,14 +243,14 @@ russisk;norsk
 холодный;kald
 часто;ofte
 шарф;skjerf
-етот (эта,это,эти);denne,dette,disse
+этот (эта, это, эти);denne,dette,disse
 быть;å være (imperfektiv)
 век;århundre
 весёлый;munter,glad
 вместе;sammen
 внук;barnebarn (gutt)
 внучка;barnebarn (jente)
-вчера
+вчера;i går
 высокий;høy
 год;år
 звать;å kalle (imperfektiv)
@@ -261,30 +260,30 @@ russisk;norsk
 профессия;yrke
 разговаривать;å snakke sammen (imperfektiv)
 раньше;tidligere,før
-ребёнок (дети pl);barn
+ребёнок;barn (дети pl)
 родной;biologisk
 родственник;slektning
 сосед;nabo
 спрашивать;å spørre (imperfektiv)
 старший;eldre,eldst
-тетрадь fem;notatbok
+тетрадь;notatbok fem
 фамилия;etternavn
 аэропорт;flyplass
-без + genitiv;uten
+без;uten
 виза;visum
 вход;inngang
 гостиница;hotell
 готовый;ferdig
-деньги pl;penger
-для + genitiv;for,til
+деньги;penger pl
+для;for, til
 документ;dokument
 дорога;vei,reise
 место;sted,plass
 паспорт;pass
-после + genitiv;etter
+после;etter
 родители;foreldre
-рубль masc;rubel
-с + genitiv;fra
+рубль;rubel masc
+с;fra
 самолёт;fly
 час;time
 всегда;alltid
@@ -301,10 +300,10 @@ russisk;norsk
 страница;side (i bok)
 встречать;å møte,treffe
 горячий;varm
-гость masc;gjest
+гость;gjest masc
 давать;å gi (imperfektiv)
-дарить;å gi bort,gi i gave (imperfektiv)
-ездить;å кjøre (uten bestemt retning)
+дарить;å gi bort, gi i gave (imperfektiv)
+ездить;å kjøre (uten bestemt retning) (imperfektiv)
 желать;å ønske (imperfektiv)
 касса;kasse i butikk
 купить;å kjøpe (perfektiv)
@@ -316,20 +315,20 @@ russisk;norsk
 вокзал;jernbanestasjon
 городской;by-
 ждать;å vente (imperfektiv)
-житель masc;innbygger
+житель;innbygger masc
 и...и...;både...og...
 левый;venstre
 минута;minutt
 остановка;holdeplass
-поежать;å reise (imperfektiv)
+поехать;å reise (imperfektiv)
 правый;høyre
-поити;å gå (imperfektiv)
+пойти;å gå (imperfektiv)
 правый;høyre
-свой (своя,своё,свои);sin,sitt,sine
+свой (своя, своё, свои);sin,sitt,sine
 сидеть;å sitte (imperfektiv)
 умный;smart
 учёный;lærd,vitenskapsmann
-часы pl;klokke
+часы;klokke pl
 группа;gruppe
 ложка;skje
 звонить;å ringe (imperfektiv)
@@ -346,14 +345,14 @@ russisk;norsk
 государственный;statlig
 здание;bygning
 каждый;hver
-напижать;å skrive (perfektiv)
+написать;å skrive (perfektiv)
 обычно;vanligvis
 опаздывать;å være forsinket (imperfektiv)
 поездка;reise
 позвонить;å ringe (perfektiv)
 приложение;app
 разный;forskjellig
-ропссиский;russisk (statlig)
+российский;russisk (statlig)
 современный;moderne
 спросить;å spørre (perfektiv)
 столица;hovedstad
@@ -361,19 +360,19 @@ russisk;norsk
 транспорт;transport
 биология;biologi
 дать;å gi (perfektiv)
-изцестный;kjent
+известный;kjent
 лекция;forelesning
 литература;litteratur
-математия;matematikk
+математика;matematikk
 московский;moskovskij
 образование;utdanning
 овщежитие;studentbolig
-общий;felles,generell
+общий;felles, generell
 посмотреть;å se (perfektiv)
 поступать;å søke opptak,begynne på høyere utdannelse (imperfektiv)
 поступить;å søke opptak,begynne på høyere utdannelse (perfektiv)
 предмет;fag
-преподаватель masc;lærer,foreleser
+преподаватель;lærer,foreleser masc
 река;elv
 сделать;å gjøre (perfektiv)
 студенческий;student-
@@ -384,7 +383,7 @@ russisk;norsk
 учиться;å studere,lære (seg) (imperfektiv)
 факултет;fakultet
 философия;filosofi
-эксамен;eksamen
+экзамен;eksamen
 экономика;økonomi
 бедный;fattig
 беликий;stor
@@ -392,7 +391,7 @@ russisk;norsk
 встать;å stå opp (perfektiv)
 голубой;lys blå
 грамм;gram
-жизнь fem;liv
+жизнь;liv fem
 инженер;ingeniør
 картошка;potet
 килограмм;kilogram
@@ -400,40 +399,40 @@ russisk;norsk
 народный костюм;folkedrakt
 настоящий;ekte,virkelig
 обощ;grønnsak
-писатель masc;forfatter
+писатель;forfatter masc
 помнить;å huske (imperfektiv)
 станция;stasjon
 уставать;å bli trøtt (imperfektiv)
 устать;å bli sliten (perfektiv)
-хозяин masc;husbond
+хозяин;husbond masc
 яблоко;eple
 яйцо;egg
-англичанин pl (англичане);engelskmann
-должен (должна,должно,должны);måtte,skulle,burde
+англичанин;engelskmann pl (англичане)
+должен (должна, должно, должны);måtte,skulle,burde
 завод;fabrikk
 иностранец;utlending
 клуб;klubb
 менеджер;manager
 музыкант;musiker
-находиться;å befinne seg,ligge (imperfektiv)
-преехать;å flytte (perfektiv)
-разсказать;å fortelle (perfektiv)
+находиться;å befinne seg, ligge (imperfektiv)
+переехать;å flytte (perfektiv)
+рассказать;å fortelle (perfektiv)
 сказать;å si (perfektiv)
 танцевать;å danse (imperfektiv)
 фотографировать;å fotografere (imperfektiv)
-часть fem;del
-другой;annen,аnnerledes
+часть;del fem
+другой;annen, annerledes
 курить;å røyke (imperfektiv)
 мороженое;iskrem
 называться;å hete (imperfektiv)
 немец;tysk (person)
-национальность fem;nasjonalitet
+национальность;nasjonalitet fem
 национальный;nasjonal
 подумать;å tenke (perfektiv)
 поужинать;å spise middag (kveldsmat) (perfektiv)
 свет;lys
 трудный;vanskelig
-удобольствие;glede
+удовольствие;glede
 фирма;firma
 южный;sørlig
 
