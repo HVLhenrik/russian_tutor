@@ -65,7 +65,7 @@ class WordPractice:
             # Norwegian mode - filter by verb prefix "å"
             print("\nPractice mode:")
             print("1. All words (mixed)")
-            print("2. Verbs only (å verbs)")
+            print("2. Verbs only")
             
             choice = input("\nEnter choice (1-2, default=1): ").strip()
             
