@@ -29,7 +29,6 @@ class AdjectiveDatabase:
                     "accusative": "новые",  # inanimate
                     "genitive": "новых",
                     "dative": "новым",
-                    "instrumental": "новыми",
                     "prepositional": "новых"
                 }
             },
@@ -60,7 +59,6 @@ class AdjectiveDatabase:
                     "accusative": "красивые",
                     "genitive": "красивых",
                     "dative": "красивым",
-                    "instrumental": "красивыми",
                     "prepositional": "красивых"
                 }
             },
@@ -91,7 +89,6 @@ class AdjectiveDatabase:
                     "accusative": "старые",
                     "genitive": "старых",
                     "dative": "старым",
-                    "instrumental": "старыми",
                     "prepositional": "старых"
                 }
             },
@@ -122,7 +119,6 @@ class AdjectiveDatabase:
                     "accusative": "белые",
                     "genitive": "белых",
                     "dative": "белым",
-                    "instrumental": "белыми",
                     "prepositional": "белых"
                 }
             },
@@ -153,7 +149,6 @@ class AdjectiveDatabase:
                     "accusative": "красные",
                     "genitive": "красивых",
                     "dative": "красным",
-                    "instrumental": "красными",
                     "prepositional": "красных"
                 }
             },
@@ -186,7 +181,6 @@ class AdjectiveDatabase:
                     "accusative": "большие",
                     "genitive": "больших",
                     "dative": "большим",
-                    "instrumental": "большими",
                     "prepositional": "больших"
                 }
             },
@@ -217,7 +211,6 @@ class AdjectiveDatabase:
                     "accusative": "молодые",
                     "genitive": "молодых",
                     "dative": "молодым",
-                    "instrumental": "молодыми",
                     "prepositional": "молодых"
                 }
             },
@@ -248,7 +241,6 @@ class AdjectiveDatabase:
                     "accusative": "дорогие",
                     "genitive": "дорогих",
                     "dative": "дорогим",
-                    "instrumental": "дорогими",
                     "prepositional": "дорогих"
                 }
             },
@@ -281,7 +273,6 @@ class AdjectiveDatabase:
                     "accusative": "хорошие",
                     "genitive": "хороших",
                     "dative": "хорошим",
-                    "instrumental": "хорошими",
                     "prepositional": "хороших"
                 }
             },
@@ -312,7 +303,6 @@ class AdjectiveDatabase:
                     "accusative": "синие",
                     "genitive": "синих",
                     "dative": "синим",
-                    "instrumental": "синими",
                     "prepositional": "синих"
                 }
             },
@@ -343,7 +333,6 @@ class AdjectiveDatabase:
                     "accusative": "маленькие",
                     "genitive": "маленьких",
                     "dative": "маленьким",
-                    "instrumental": "маленькими",
                     "prepositional": "маленьких"
                 }
             },
@@ -374,7 +363,6 @@ class AdjectiveDatabase:
                     "accusative": "русские",
                     "genitive": "русских",
                     "dative": "русским",
-                    "instrumental": "русскими",
                     "prepositional": "русских"
                 }
             },
@@ -405,7 +393,6 @@ class AdjectiveDatabase:
                     "accusative": "вкусные",
                     "genitive": "вкусных",
                     "dative": "вкусным",
-                    "instrumental": "вкусными",
                     "prepositional": "вкусных"
                 }
             },
@@ -436,7 +423,6 @@ class AdjectiveDatabase:
                     "accusative": "спортивные",
                     "genitive": "спортивных",
                     "dative": "спортивным",
-                    "instrumental": "спортивными",
                     "prepositional": "спортивных"
                 }
             },
@@ -467,7 +453,6 @@ class AdjectiveDatabase:
                     "accusative": "музыкальные",
                     "genitive": "музыкальных",
                     "dative": "музыкальным",
-                    "instrumental": "музыкальными",
                     "prepositional": "музыкальных"
                 }
             }
