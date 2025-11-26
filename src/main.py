@@ -27,7 +27,8 @@ from utils.verb_conjugation_rules import (
 def view_declension_rules():
     """View declension rules reference"""
     while True:
-        choice = display_declension_menu()
+        display_declension_menu()
+        choice = input("\nEnter your choice (1-6): ").strip()
         
         if choice == '1':
             display_noun_declension_rules()
@@ -38,9 +39,18 @@ def view_declension_rules():
         elif choice == '4':
             display_case_usage_guide()
         elif choice == '5':
+            # View All Rules
+            display_noun_declension_rules()
+            print("\n" + "-" * 50 + "\n")
+            display_adjective_declension_rules()
+            print("\n" + "-" * 50 + "\n")
+            display_pronoun_declension_rules()
+            print("\n" + "-" * 50 + "\n")
+            display_case_usage_guide()
+        elif choice == '6':
             break
         else:
-            print("\n❌ Invalid choice. Please select 1-5.")
+            print("\n❌ Invalid choice. Please select 1-6.")
         
         input("\nPress Enter to continue...")
 
@@ -583,7 +593,7 @@ def take_quiz():
     print("\n=== COMPREHENSIVE RUSSIAN QUIZ ===\n")
     print("💡 Type 'quit' or 'q' at any time to exit")
     
-    num_questions = input("How many questions? (default 10): ").strip()
+    num_questions = input("How many questions? (default 10): ")
     num_questions = int(num_questions) if num_questions.isdigit() else 10
     
     results = quiz_engine.run_quiz(num_questions)
